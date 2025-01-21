@@ -1,0 +1,23 @@
+{
+  "name": "dice-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --fix ",
+    "format:fix": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "22.10.7",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.21.0"
+  },
+  "private": true
+}
