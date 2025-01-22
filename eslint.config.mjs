@@ -12,6 +12,7 @@ export default [
                 sourceType: 'module',
             },
             globals: {
+                Buffer: 'readonly',
                 crypto: 'readonly',
                 process: 'readonly',
                 console: 'readonly',

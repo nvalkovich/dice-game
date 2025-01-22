@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "lint": "eslint . --fix ",
-    "format:fix": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\""
+    "start": " node --no-warnings --loader ts-node/esm --es-module-specifier-resolution=node src/index.ts",
+    "format:fix": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
+    "lint": "eslint . --fix "
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
@@ -15,8 +16,10 @@
     "@typescript-eslint/parser": "^8.21.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
+    "nodemon": "^3.1.9",
     "prettier": "^3.4.2",
-    "typescript": "^5.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
     "typescript-eslint": "^8.21.0"
   },
   "private": true
