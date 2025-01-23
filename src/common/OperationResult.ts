@@ -7,14 +7,6 @@ export class OperationResult<TResult, TError> {
         this.error = error;
     }
 
-    public get isSuccessful() {
-        return !!this.result;
-    }
-
-    public get isFailed() {
-        return !!this.error;
-    }
-
     static createSuccessful<TResult>(result: TResult) {
         return new OperationResult(result);
     }

@@ -1,6 +1,6 @@
 import { Player, PlayersNames } from './Player';
 import { Dice } from '../dice/Dice';
-import { menuMessages } from '../console/Console';
+import { resources } from '../common/resources';
 
 export class HumanPlayer extends Player {
     private readonly promptUserChoice: <T>(options: T[], message: string) => T;
@@ -12,10 +12,16 @@ export class HumanPlayer extends Player {
 
     selectDice(availableDice: Dice[], firstPlayer: string): void {
         if (firstPlayer === this.name) {
-            console.log('You make the first move.');
+            console.log(resources.firstMove.userMakesFirstMove);
         }
 
-        this.dice = this.promptUserChoice(availableDice, menuMessages.chooseDiceMessage);
-        console.log(`You chose ${Dice.formatDice(this.dice)} dice.`);
+        this.dice = this.promptUserChoice(
+            availableDice,
+            resources.menu.chooseDiceMessage,
+        );
+
+        console.log(
+            resources.dice.getUserChooseDiceMessage(Dice.formatDice(this.dice)),
+        );
     }
 }

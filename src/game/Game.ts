@@ -1,4 +1,4 @@
-import { Console, menuMessages } from '../console/Console';
+import { Console } from '../console/Console';
 import { Config } from '../config/Config';
 import { Dice } from '../dice/Dice';
 import { Player } from '../players/Player';
@@ -9,6 +9,7 @@ import {
     FIRST_MOVE_OPTIONS,
     FIRST_MOVE_OPTIONS_COUNT,
 } from '../common/constants';
+import { resources } from '../common/resources';
 
 export class Game {
     private readonly dices: Dice[];
@@ -22,7 +23,7 @@ export class Game {
         this.dices = config.dices;
         this.human = new HumanPlayer(this.promptUserChoice.bind(this));
         this.computer = new ComputerPlayer();
-        this.gameConsole = new Console();
+        this.gameConsole = new Console({ dices: this.dices });
     }
 
     public start() {
@@ -35,7 +36,10 @@ export class Game {
         this.gameConsole.announceFirstMove();
 
         const computerChoice = this.generateComputerChoice(FIRST_MOVE_OPTIONS_COUNT);
-        const userGuess = this.promptUserChoice(FIRST_MOVE_OPTIONS, menuMessages.firstMoveMessage);
+        const userGuess = this.promptUserChoice(
+            FIRST_MOVE_OPTIONS,
+            resources.menu.firstMoveMessage,
+        );
 
         this.gameConsole.writeComputerSelection(computerChoice);
 
@@ -59,7 +63,7 @@ export class Game {
         const firstScore = this.takeThrowOrder(this.firstPlayer);
         const secondScore = this.takeThrowOrder(this.secondPlayer);
 
-        this.gameConsole.announceWinner(firstScore, secondScore);
+        this.gameConsole.writeWinner(firstScore, secondScore);
     }
 
     private takeThrowOrder(player: Player): number {
@@ -77,7 +81,7 @@ export class Game {
         const computerChoice = this.generateComputerChoice(DICE_FACES_COUNT);
         const userGuess = this.promptUserChoice(
             Array.from({ length: 6 }, (_, i) => i),
-            menuMessages.addNumberMessage,
+            resources.menu.addNumberMessage,
         );
 
         return { computerChoice, userGuess };

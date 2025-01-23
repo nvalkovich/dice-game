@@ -1,48 +1,60 @@
 import { Config } from './Config';
 import { OperationResult } from '../common/OperationResult';
 import { Dice } from '../dice/Dice';
-import { DICE_FACES_COUNT } from '../common/constants';
+import { MIN_ARGV_LENGTH, DICE_FACES_COUNT } from '../common/constants';
+import { Validator } from '../validator/Validator';
+import { resources } from '../common/resources';
 
 export class ConfigParser {
-    static parseArgv(argv: string[]): OperationResult<Config | undefined, string | unknown> {
-        const args = argv.slice(2);
-
-        if (args.length < 3) {
-            return OperationResult.createFailed(
-                `ERROR: You must provide at least 3 configurations of dices. You provided only ${args.length}.`,
-            );
+    static parseArgv(
+        argv: string[],
+    ): OperationResult<Config, string | unknown> {
+        const lengthError = this.validateArgvLength(argv);
+        if (lengthError) {
+            return OperationResult.createFailed(lengthError);
         }
 
+        const dicesResult = this.parseAllDices(argv);
+        return dicesResult.error
+            ? OperationResult.createFailed(dicesResult.error)
+            : OperationResult.createSuccessful(new Config(dicesResult.result!));
+    }
+
+    private static validateArgvLength(argv: string[]): string | null {
+        return argv.length < MIN_ARGV_LENGTH
+            ? resources.errors.getInvalidArgvLengthError(argv.length)
+            : null;
+    }
+
+    private static parseAllDices(
+        argv: string[],
+    ): OperationResult<Dice[], string | unknown> {
         const dices: Dice[] = [];
 
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            const faces = arg.split(',');
-
-            if (faces.length !== DICE_FACES_COUNT) {
-                return OperationResult.createFailed(
-                    `ERROR: Each dice must be a list of exactly ${DICE_FACES_COUNT} sides, but you provided ${faces.length} ${faces.length > 1 ? 'sides' : 'side'} on dice ${i + 1}. Please, ${faces.length > DICE_FACES_COUNT ? `remove unnecessary (${faces.length - DICE_FACES_COUNT})` : `add the missing (${DICE_FACES_COUNT - faces.length})`} sides!`,
-                );
+        for (let i = 0; i < argv.length; i++) {
+            const { error, result } = this.parseDice(argv[i], i);
+            if (error) {
+                return OperationResult.createFailed(error);
             }
-
-            const isInvalidCharacterExist = faces.some(
-                (side) => isNaN(+side) || !Number.isInteger(+side),
-            );
-
-            if (isInvalidCharacterExist) {
-                return OperationResult.createFailed(
-                    `ERROR: There are invalid values in dice ${i + 1}. You must enter the valid list - each side must be an integer.`,
-                );
-            }
-
-            dices.push(
-                new Dice(
-                    i,
-                    faces.map((s) => +s),
-                ),
-            );
+            dices.push(result!);
         }
 
-        return OperationResult.createSuccessful(new Config(dices));
+        return OperationResult.createSuccessful(dices);
+    }
+
+    private static parseDice(
+        arg: string,
+        index: number,
+    ): OperationResult<Dice, string | unknown> {
+        const faces = arg.split(',');
+        const error =
+            Validator.validateDiceFacesCount(faces, DICE_FACES_COUNT, index) ??
+            Validator.validateDiceFacesValues(faces, index);
+
+        return error
+            ? OperationResult.createFailed(error)
+            : OperationResult.createSuccessful(
+                  new Dice(index, faces.map(Number)),
+              );
     }
 }

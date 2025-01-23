@@ -2,6 +2,8 @@ import { Player, PlayersNames } from './Player';
 import { Dice } from '../dice/Dice';
 import { NumberGenerator } from '../numberGenerator/NumberGenerator';
 import { FairNumber } from '../numberGenerator/FairNumber';
+import { ProbabilityCalculator } from '../probabilityCalculator/ProbabilityCalculator';
+import { resources } from '../common/resources';
 
 export class ComputerPlayer extends Player {
     constructor() {
@@ -9,11 +11,12 @@ export class ComputerPlayer extends Player {
     }
 
     selectDice(availableDice: Dice[], firstPlayerName?: PlayersNames): void {
-        const randomIndex = NumberGenerator.generateNumber(availableDice.length);
-        this.dice = availableDice[randomIndex];
-
+        this.dice = ProbabilityCalculator.findBestDice(availableDice);
         console.log(
-            `${firstPlayerName === this.name ? 'I make the first move and' : 'I'} choose ${this.formatDice(this.dice)} dice.`,
+            resources.dice.getComputerChooseDiceMessage(
+                firstPlayerName === this.name,
+                this.formatDice(this.dice),
+            ),
         );
     }
 
@@ -21,8 +24,13 @@ export class ComputerPlayer extends Player {
         const fairNumber = NumberGenerator.generateFairNumber(maxValue);
 
         const startValue = 0;
+
         console.log(
-            `I selected a random value in the range ${startValue}..${maxValue - 1} (HMAC=${fairNumber.hmac.toUpperCase()})`,
+            resources.common.getComputerSelectedValueMessage(
+                startValue,
+                maxValue - 1,
+                fairNumber.hmac,
+            ),
         );
 
         return fairNumber;
