@@ -1,67 +1,49 @@
-import { DICE_FACES_COUNT, MIN_ARGV_LENGTH } from './constants';
-import { FairNumber } from '../numberGenerator/FairNumber';
-import { Player, PlayersNames } from '../players/Player';
-
 export const resources = {
-    common: {
-        getComputerSelectedValueMessage: (
-            startValue: number,
-            maxValue: number,
+    messages: {
+        getISelectedRandomValue: (
+            rangeStart: number,
+            rangeEnd: number,
             hmac: string,
-        ): string =>
-            `I selected a random value in the range ${startValue}..${maxValue} (HMAC=${hmac.toUpperCase()})`,
-    },
-    menu: {
-        firstMoveMessage: 'Try to guess my selection. ',
-        chooseDiceMessage: 'Choose your dice: ',
-        addNumberMessage: `Add your number modulo ${DICE_FACES_COUNT}.`,
-        question: 'Your selection: ',
-        helpCommand: 'help',
-        exitCommand: 'exit',
-        invalidValueMessage:
+        ) =>
+            `I selected a random value in the range ${rangeStart}..${rangeEnd} (HMAC=${hmac.toUpperCase()})`,
+        tryToGuessSelection: 'Try to guess my selection.',
+        chooseYourDice: 'Choose your dice:',
+        getAddNumberModulo: (modulo: number) =>
+            `Add your number modulo ${modulo}.`,
+        yourSelection: 'Your selection: ',
+        help: 'help',
+        exit: 'exit',
+        invalidValuePleaseSelectFromList:
             'Invalid value. Please, select a value from the list above.',
-    },
-    firstMove: {
-        determineFirstMove: `Let's determine who makes the first move.`,
-        userMakesFirstMove: 'You make the first move.',
-        getComputerSelectionMessage: ({ number, key }: FairNumber): string =>
-            `My selection: ${number} (KEY=${key.toUpperCase()}).`,
-    },
-    dice: {
-        getComputerChooseDiceMessage: (
-            isComputerFirst: boolean,
-            dice: string,
-        ): string =>
-            `${isComputerFirst ? 'I make the first move and' : 'I'} choose ${dice} dice.`,
-        getUserChooseDiceMessage: (dice: string): string =>
-            `You chose ${dice} dice.`,
-    },
-    throw: {
-        getComputerNumberMessage: ({ number, key }: FairNumber): string =>
-            `My number is ${number} (KEY=${key.toUpperCase()}).`,
-        getThrowAnnouncementMessage: (currentPlayerName: string): string =>
-            `It's time for ${currentPlayerName === PlayersNames.computer ? 'my' : 'your'} throw.`,
-        getAdditionResultMessage: (
-            computerChoiceNumber: number,
-            userGuessNumber: number,
-            result: number,
-        ): string =>
-            `The result is ${computerChoiceNumber} + ${userGuessNumber} = ${result} (mod ${DICE_FACES_COUNT}).`,
-        getThrowResultMessage: (
-            { name, dice }: Player,
-            result: number,
-        ): string =>
-            `${name === PlayersNames.computer ? 'My' : 'Your'} throw is ${dice.faces[result]}.`,
-    },
-    final: {
-        getWinnerMessage: (firstScore: number, secondScore: number): string =>
-            firstScore > secondScore
-                ? `You win (${firstScore} > ${secondScore})!`
-                : secondScore > firstScore
-                  ? `I win (${secondScore} > ${firstScore})!`
-                  : "It's a draw!",
-    },
-    help: {
+        letsDetermineFirstMove: `Let's determine who makes the first move.`,
+        youMakeFirstMove: 'You make the first move.',
+        mySelection: `My selection:`,
+        myNumber: `My number is`,
+        i: 'I',
+        makeTheFirstMove: 'make the first move and',
+        getChooseDice: (dice: string) => `choose ${dice} dice`,
+        getYouChooseDice: (dice: string) => `You chose ${dice} dice.`,
+        getNumberAndKey: (number: number, key: string) =>
+            `${number} (KEY=${key.toUpperCase()}`,
+        my: 'My',
+        your: 'Your',
+        getItsTimeForThrow: (player: string) =>
+            `It's time for ${player.toLowerCase()} throw.`,
+        getTheResultIs: (
+            first: number,
+            second: number,
+            sum: number,
+            mod: number,
+        ) => `The result is ${first} + ${second} = ${sum} (mod ${mod}).`,
+        getPlayerThrowIs: (player: string, result: number) =>
+            `${player} throw is ${result}.`,
+        youWin: 'You win',
+        iWin: 'I win',
+        itsDraw: "It's a draw",
+        getFirstHigherThanSecond: (first: number, second: number) =>
+            `(${first} > ${second})!`,
+        getFirstEqualWithSecond: (first: number, second: number) =>
+            `(${first} = ${second})!`,
         gameRules: `Game Rules:
 1. Determine first move:
     The player chooses 0 or 1. If they guess correctly, they go first; otherwise, the computer does.
@@ -76,30 +58,24 @@ export const resources = {
     The player with the higher final value wins or it can be a draw.`,
         probabilityTableTitle:
             'The table below shows the probability of winning for each pair of dice.',
-        probabilityTableHeader: 'User dice ',
-    },
-    exit: {
-        exitMessage: 'Exiting the game. Bye!',
+        userDice: 'User dice ',
+        exitGame: 'Exiting the game. Bye!',
     },
     errors: {
-        getInvalidArgvLengthError: (length: number): string =>
-            `Error: You must provide at least ${MIN_ARGV_LENGTH} configurations of dices. You provided only ${length}.`,
-        getInvalidDiceFacesCountError: (
-            faces: string[],
+        error: 'ERROR:',
+        getInvalidArgvLength: (minLength: number, length: number) =>
+            `${resources.errors.error} You must provide at least ${minLength} configurations of dices. You provided ${length}.`,
+        getInvalidDiceFacesCount: (
+            diceNumber: number,
             expectedCount: number,
-            diceIndex: number,
-        ): string =>
-            `ERROR: Each dice must have exactly ${expectedCount} faces, but dice ${
-                diceIndex + 1
-            } has ${faces.length}. ${
-                faces.length > expectedCount
-                    ? `Remove ${faces.length - expectedCount} extra ${faces.length - expectedCount > 1 ? 'faces' : 'face'}.`
-                    : `Add ${expectedCount - faces.length} missing ${expectedCount - faces.length > 1 ? 'faces' : 'face'}.`
-            }`,
-        getInvalidDiceFacesValuesError: (
-            diceIndex: number,
-            invalidFaces: string[],
-        ): string =>
-            `ERROR: Dice ${diceIndex + 1} contains invalid ${invalidFaces.length > 1 ? 'values' : 'value'}: ${invalidFaces.join(', ')}. Each face must be an integer.`,
+            count: number,
+        ) =>
+            `${resources.errors.error} Each dice must have exactly ${expectedCount} faces, but dice ${diceNumber} has ${count}.`,
+        getRemoveExtraFaces: (count: number) =>
+            `Remove ${count} extra ${count > 1 ? 'faces' : 'face'}.`,
+        getAddMissingFaces: (count: number) =>
+            `Add ${count} missing ${count > 1 ? 'faces' : 'face'}.`,
+        getInvalidDiceFaces: (diceNumber: number, invalidFaces: string[]) =>
+            `${resources.errors.error} Dice ${diceNumber} contains invalid ${invalidFaces.length > 1 ? 'values' : 'value'}: ${invalidFaces.join(', ')}. Each face must be an integer.`,
     },
 };

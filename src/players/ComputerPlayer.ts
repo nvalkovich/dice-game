@@ -12,23 +12,27 @@ export class ComputerPlayer extends Player {
 
     selectDice(availableDice: Dice[], firstPlayerName?: PlayersNames): void {
         this.dice = ProbabilityCalculator.findBestDice(availableDice);
-        console.log(
-            resources.dice.getComputerChooseDiceMessage(
-                firstPlayerName === this.name,
-                this.formatDice(this.dice),
-            ),
-        );
+        const isFirstPlayer = firstPlayerName === this.name;
+
+        const message = [
+            `${resources.messages.i} `,
+            isFirstPlayer ? `${resources.messages.makeTheFirstMove} ` : '',
+            resources.messages.getChooseDice(this.dice.toString()),
+        ].join('');
+
+        console.log(message);
     }
 
     public generateRandomChoice(maxValue): FairNumber {
         const fairNumber = NumberGenerator.generateFairNumber(maxValue);
 
-        const startValue = 0;
+        const rangeStart = 0;
+        const rangeEnd = maxValue - 1;
 
         console.log(
-            resources.common.getComputerSelectedValueMessage(
-                startValue,
-                maxValue - 1,
+            resources.messages.getISelectedRandomValue(
+                rangeStart,
+                rangeEnd,
                 fairNumber.hmac,
             ),
         );

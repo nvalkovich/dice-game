@@ -4,12 +4,9 @@ import { Dice } from '../dice/Dice';
 import { Player } from '../players/Player';
 import { HumanPlayer } from '../players/HumanPlayer';
 import { ComputerPlayer } from '../players/ComputerPlayer';
-import {
-    DICE_FACES_COUNT,
-    FIRST_MOVE_OPTIONS,
-    FIRST_MOVE_OPTIONS_COUNT,
-} from '../common/constants';
+import { DICE_FACES_COUNT } from '../common/constants';
 import { resources } from '../common/resources';
+import { FairNumber } from '../numberGenerator/FairNumber';
 
 export class Game {
     private readonly dices: Dice[];
@@ -19,11 +16,11 @@ export class Game {
     private firstPlayer!: Player;
     private secondPlayer!: Player;
 
-    constructor(config: Config) {
+    constructor(config: Config, gameConsole: Console) {
         this.dices = config.dices;
         this.human = new HumanPlayer(this.promptUserChoice.bind(this));
         this.computer = new ComputerPlayer();
-        this.gameConsole = new Console({ dices: this.dices });
+        this.gameConsole = gameConsole;
     }
 
     public start() {
@@ -35,18 +32,26 @@ export class Game {
     private determineFirstMove() {
         this.gameConsole.announceFirstMove();
 
-        const computerChoice = this.generateComputerChoice(FIRST_MOVE_OPTIONS_COUNT);
+        const computerChoice = this.generateComputerChoice(
+            Console.FIRST_MOVE_MENU_OPTIONS.length,
+        );
         const userGuess = this.promptUserChoice(
-            FIRST_MOVE_OPTIONS,
-            resources.menu.firstMoveMessage,
+            Console.FIRST_MOVE_MENU_OPTIONS,
+            resources.messages.tryToGuessSelection,
         );
 
-        this.gameConsole.writeComputerSelection(computerChoice);
+        this.gameConsole.writeFairNumberMessage(
+            resources.messages.mySelection,
+            computerChoice,
+        );
 
         this.determineFirstPlayer(userGuess, computerChoice);
     }
 
-    private determineFirstPlayer(userGuess, computerChoice) {
+    private determineFirstPlayer(
+        userGuess: number,
+        computerChoice: FairNumber,
+    ) {
         [this.firstPlayer, this.secondPlayer] =
             userGuess === computerChoice.number
                 ? [this.human, this.computer]
@@ -56,32 +61,47 @@ export class Game {
     private selectDice() {
         const firstPlayerName = this.firstPlayer.name;
         this.firstPlayer.selectDice(this.dices, firstPlayerName);
-        this.secondPlayer.selectDice(this.getAvailableDice(this.firstPlayer.dice), firstPlayerName);
+        this.secondPlayer.selectDice(
+            this.getAvailableDice(this.firstPlayer.dice),
+            firstPlayerName,
+        );
     }
 
     private playGame() {
-        const firstScore = this.takeThrowOrder(this.firstPlayer);
-        const secondScore = this.takeThrowOrder(this.secondPlayer);
+        this.takeThrowOrder(this.firstPlayer);
+        this.takeThrowOrder(this.secondPlayer);
 
-        this.gameConsole.writeWinner(firstScore, secondScore);
+        this.gameConsole.writeWinner(
+            this.human.throwResult,
+            this.computer.throwResult,
+        );
     }
 
-    private takeThrowOrder(player: Player): number {
+    private takeThrowOrder(player: Player) {
         this.gameConsole.announceThrow(player.name);
 
         const { computerChoice, userGuess } = this.throw();
 
-        const result = this.calculateThrowResult(computerChoice.number, userGuess);
-        this.gameConsole.writeThrowDetails(player, computerChoice, userGuess, result);
+        const result = this.calculateThrowResult(
+            computerChoice.number,
+            userGuess,
+        );
 
-        return player.dice.faces[result];
+        player.setResult(result);
+
+        this.gameConsole.writeThrowDetails(
+            player,
+            computerChoice,
+            userGuess,
+            result,
+        );
     }
 
     private throw() {
         const computerChoice = this.generateComputerChoice(DICE_FACES_COUNT);
         const userGuess = this.promptUserChoice(
-            Array.from({ length: 6 }, (_, i) => i),
-            resources.menu.addNumberMessage,
+            Array.from({ length: DICE_FACES_COUNT }, (_, i) => i),
+            resources.messages.getAddNumberModulo(DICE_FACES_COUNT),
         );
 
         return { computerChoice, userGuess };
@@ -100,6 +120,8 @@ export class Game {
     }
 
     private promptUserChoice<T>(options: T[], message: string): T {
-        return this.gameConsole.askQuestion(message, options, (o) => o.toString());
+        return this.gameConsole.askQuestion(message, options, (o) =>
+            o.toString(),
+        );
     }
 }

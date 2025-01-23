@@ -1,18 +1,22 @@
 import readlineSync from 'readline-sync';
-import { Player } from '../players/Player';
+import { Player, PlayersNames } from '../players/Player';
 import { FairNumber } from '../numberGenerator/FairNumber';
-import { TableGenerator } from '../table/TableGenerator';
 import { Dice } from '../dice/Dice';
-import { ProbabilityCalculator } from '../probabilityCalculator/ProbabilityCalculator';
-import { Validator } from '../validator/Validator';
+import { ConsoleValidator } from './ConsoleValidator';
 import { resources } from '../common/resources';
+import { DICE_FACES_COUNT } from '../common/constants';
 
 export class Console {
+    private static readonly HELP_COMMANDS = ['?', resources.messages.help];
+    private static readonly EXIT_COMMANDS = ['x', resources.messages.exit];
+    public static readonly FIRST_MOVE_MENU_OPTIONS = [0, 1];
+
     private gameData: {
         dices: Dice[];
+        table: string;
     };
 
-    constructor(gameData: { dices: Dice[] }) {
+    constructor(gameData: { dices: Dice[]; table: string }) {
         this.gameData = gameData;
     }
 
@@ -24,27 +28,37 @@ export class Console {
         this.writeMenu(question, options.map(getOptionName));
 
         while (true) {
-            const input = readlineSync
-                .question(resources.menu.question)
-                .trim()
-                .toLowerCase();
-            const dices = this.gameData.dices;
+            const input = this.getUserInput();
 
-            if (['?', resources.menu.helpCommand].includes(input)) {
-                this.writeHelp(dices);
+            if (Console.HELP_COMMANDS.includes(input)) {
+                this.writeHelp();
                 continue;
-            }
-
-            if (['x', resources.menu.exitCommand].includes(input)) {
+            } else if (Console.EXIT_COMMANDS.includes(input)) {
                 this.exit();
             }
 
-            if (Validator.validateMenuInput(input, options.length)) {
-                return options[parseInt(input, 10)];
+            if (ConsoleValidator.validateMenuInput(input, options.length)) {
+                return options[parseInt(input)];
             }
 
-            console.log(resources.menu.invalidValueMessage);
+            this.showInvalidInputMessage();
         }
+    }
+
+    private getUserInput(): string {
+        return readlineSync
+            .question(resources.messages.yourSelection)
+            .trim()
+            .toLowerCase();
+    }
+
+    private showInvalidInputMessage() {
+        console.log(resources.messages.invalidValuePleaseSelectFromList);
+    }
+
+    private writeMenu(question: string, options: string[]) {
+        const menu = this.generateMenu(question, options);
+        console.log(menu);
     }
 
     private generateMenu(question: string, options: string[]): string {
@@ -55,49 +69,48 @@ export class Console {
             question,
             formattedOptions,
             ...[
-                `Х - ${resources.menu.exitCommand}`,
-                `? - ${resources.menu.helpCommand}`,
+                `Х - ${resources.messages.exit}`,
+                `? - ${resources.messages.help}`,
             ],
         ].join('\n');
     }
 
-    private writeMenu(question: string, options: string[]) {
-        const menu = this.generateMenu(question, options);
-        console.log(menu);
-    }
+    public writeHelp() {
+        console.log(resources.messages.gameRules);
+        console.log(resources.messages.probabilityTableTitle);
 
-    public writeHelp(dices: Dice[]) {
-        console.log(resources.help.gameRules);
-        console.log(resources.help.probabilityTableTitle);
-
-        const probabilities =
-            ProbabilityCalculator.calculateProbabilities(dices);
-        const table = TableGenerator.generateProbabilityTable(
-            dices,
-            probabilities,
-        );
-
-        console.log(table);
+        console.log(this.gameData.table);
     }
 
     public announceFirstMove() {
-        console.log(resources.firstMove.determineFirstMove);
+        console.log(resources.messages.letsDetermineFirstMove);
     }
 
-    public writeComputerSelection(fairNumber: FairNumber) {
-        console.log(
-            resources.firstMove.getComputerSelectionMessage(fairNumber),
-        );
+    public writeFairNumberMessage(text: string, fairNumber: FairNumber) {
+        const message = this.formatFairNumberMessage(text, fairNumber);
+        console.log(message);
     }
 
-    public writeComputerNumber(fairNumber: FairNumber) {
-        console.log(resources.throw.getComputerNumberMessage(fairNumber));
+    private formatFairNumberMessage(
+        message: string,
+        fairNumber: FairNumber,
+    ): string {
+        return [
+            message,
+            resources.messages.getNumberAndKey(
+                fairNumber.number,
+                fairNumber.key,
+            ),
+        ].join(' ');
     }
 
     public announceThrow(currentPlayerName: string) {
-        console.log(
-            resources.throw.getThrowAnnouncementMessage(currentPlayerName),
-        );
+        const player =
+            currentPlayerName === PlayersNames.computer
+                ? resources.messages.my
+                : resources.messages.your;
+
+        console.log(resources.messages.getItsTimeForThrow(player));
     }
 
     public writeThrowDetails(
@@ -106,9 +119,12 @@ export class Console {
         userGuess: number,
         result: number,
     ) {
-        this.writeComputerNumber(computerChoice);
+        this.writeFairNumberMessage(
+            resources.messages.myNumber,
+            computerChoice,
+        );
         this.writeAdditionResult(computerChoice.number, userGuess, result);
-        this.writeThrowResult(currentPlayer, result);
+        this.writeThrowResult(currentPlayer);
     }
 
     public writeAdditionResult(
@@ -117,30 +133,66 @@ export class Console {
         result: number,
     ) {
         console.log(
-            resources.throw.getAdditionResultMessage(
+            resources.messages.getTheResultIs(
                 computerChoiceNumber,
                 userGuessNumber,
                 result,
+                DICE_FACES_COUNT,
             ),
         );
     }
 
-    public writeThrowResult(currentPlayer: Player, result: number) {
+    public writeThrowResult(currentPlayer: Player) {
+        const face = currentPlayer.throwResult;
+        const player =
+            currentPlayer.name === PlayersNames.computer
+                ? resources.messages.my
+                : resources.messages.your;
+        console.log(resources.messages.getPlayerThrowIs(player, face));
+    }
+
+    public writeWinner(humanScore: number, computerScore: number) {
+        if (humanScore === computerScore) {
+            this.showDrawMessage(humanScore, computerScore);
+            return;
+        }
+
+        const [winnerMessage, higherScore, lowerScore] =
+            this.getWinnerMessageAndScores(humanScore, computerScore);
+        this.showWinnerMessage(winnerMessage, higherScore, lowerScore);
+    }
+
+    private showDrawMessage(humanScore: number, computerScore: number) {
         console.log(
-            resources.throw.getThrowResultMessage(currentPlayer, result),
+            `${resources.messages.itsDraw} ${resources.messages.getFirstEqualWithSecond(humanScore, computerScore)}`,
         );
     }
 
-    public writeWinner(firstScore: number, secondScore: number) {
-        console.log(resources.final.getWinnerMessage(firstScore, secondScore));
+    private getWinnerMessageAndScores(
+        humanScore: number,
+        computerScore: number,
+    ): [string, number, number] {
+        return humanScore > computerScore
+            ? [resources.messages.youWin, humanScore, computerScore]
+            : [resources.messages.iWin, computerScore, humanScore];
+    }
+
+    private showWinnerMessage(
+        winnerMessage: string,
+        higherScore: number,
+        lowerScore: number,
+    ) {
+        console.log(
+            `${winnerMessage} ${resources.messages.getFirstHigherThanSecond(higherScore, lowerScore)}`,
+        );
     }
 
     public exit() {
-        console.log(resources.exit.exitMessage);
+        console.log(resources.messages.exitGame);
         process.exit(0);
     }
 
-    public static error(message: string | unknown) {
+    public static error(message: string) {
         console.log(message);
         process.exit(0);
     }

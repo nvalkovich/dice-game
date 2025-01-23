@@ -1,79 +1,53 @@
 import { Dice } from '../dice/Dice';
-import { MIN_ARGV_LENGTH } from '../common/constants';
-
-interface BestDiceResult {
-    index: number;
-    average: number;
-}
 
 export class ProbabilityCalculator {
-    public static calculateProbabilities(dices: Dice[]) {
-        return dices.map((diceA, i) =>
-            dices.map((diceB, j) =>
-                i === j
-                    ? this.getSelfProbability()
-                    : this.getWinProbability(diceA.faces, diceB.faces),
-            ),
+    public static calculateProbabilities(dices: Dice[]): number[][] {
+        return dices.map((diceA) =>
+            dices.map((diceB) => this.calculateWinProbability(diceA, diceB)),
         );
     }
 
-    private static getSelfProbability(): number {
-        return 1 / MIN_ARGV_LENGTH;
+    private static calculateWinProbability(diceA: Dice, diceB: Dice): number {
+        const facesA = diceA.faces;
+        const facesB = diceB.faces;
+
+        const wins = facesA.reduce(
+            (wins, faceA) =>
+                wins + facesB.filter((faceB) => faceA > faceB).length,
+            0,
+        );
+        return wins / (facesA.length * facesB.length);
     }
 
-    private static getWinProbability(diceA: number[], diceB: number[]): number {
-        const wins = this.countWins(diceA, diceB);
-        const totalOutcomes = diceA.length * diceB.length;
-        return this.calculateProbability(wins, totalOutcomes);
-    }
-
-    private static countWins(diceA: number[], diceB: number[]): number {
-        return diceA.reduce((wins, faceA) => wins + this.countFaceWins(faceA, diceB), 0);
-    }
-
-    private static countFaceWins(faceA: number, diceB: number[]): number {
-        return diceB.filter((faceB) => faceA > faceB).length;
-    }
-
-    private static calculateProbability(wins: number, totalOutcomes: number): number {
-        return wins / totalOutcomes;
-    }
-
-    public static findBestDice(dices: Dice[]) {
+    public static findBestDice(dices: Dice[]): Dice | null {
         const probabilities = this.calculateProbabilities(dices);
-        const bestDiceIndex = this.getBestDiceIndex(probabilities);
 
-        return bestDiceIndex !== null ? dices[bestDiceIndex] : null;
-    }
-
-    private static getBestDiceIndex(probabilities: number[][]) {
-        let bestDice = null;
+        let bestIndex = -1;
+        let bestAverage = -1;
 
         for (let i = 0; i < probabilities.length; i++) {
-            const averageWinProbability = this.calculateAverageWinProbability(probabilities, i);
-            bestDice = this.getUpdatedBestDice(bestDice, i, averageWinProbability);
+            const average = this.findProbabilitiesRowAverage(
+                probabilities[i],
+                i,
+            );
+
+            if (average > bestAverage) {
+                bestIndex = i;
+                bestAverage = average;
+            }
         }
 
-        return bestDice ? bestDice.index : null;
+        return dices[bestIndex];
     }
 
-    private static getUpdatedBestDice(
-        currentBest: BestDiceResult | null,
-        index: number,
-        averageWinProbability: number,
+    private static findProbabilitiesRowAverage(
+        probabilitiesRow: number[],
+        excludeIndex: number,
     ) {
-        return !currentBest || averageWinProbability > currentBest.average
-            ? { index, average: averageWinProbability }
-            : currentBest;
-    }
+        const sum = probabilitiesRow
+            .filter((_, index) => index !== excludeIndex)
+            .reduce((p, sum) => p + sum);
 
-    private static calculateAverageWinProbability(
-        probabilities: Array<number[]>,
-        index: number,
-    ): number {
-        const filteredProbabilities = probabilities[index].filter((_, j) => j !== index);
-        const sum = filteredProbabilities.reduce((acc, prob) => acc + prob, 0);
-
-        return sum / filteredProbabilities.length;
+        return sum / probabilitiesRow.length - 1;
     }
 }

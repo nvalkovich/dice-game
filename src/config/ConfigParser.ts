@@ -1,60 +1,62 @@
 import { Config } from './Config';
-import { OperationResult } from '../common/OperationResult';
+import { ConfigParsingResult } from './ConfigParsingResult';
 import { Dice } from '../dice/Dice';
-import { MIN_ARGV_LENGTH, DICE_FACES_COUNT } from '../common/constants';
-import { Validator } from '../validator/Validator';
+import { MIN_DICES_COUNT } from '../common/constants';
 import { resources } from '../common/resources';
+import { DiceFacesValidator } from '../dice/DiceFacesValidator';
 
 export class ConfigParser {
-    static parseArgv(
-        argv: string[],
-    ): OperationResult<Config, string | unknown> {
-        const lengthError = this.validateArgvLength(argv);
+    private static MIN_DICES_COUNT = MIN_DICES_COUNT;
+
+    public parseArgv(argv: string[]): ConfigParsingResult<Config, string> {
+        const { result: dices, error } = this.parseDices(argv.slice(2));
+        if (error) {
+            return ConfigParsingResult.createFailed(error);
+        }
+
+        const lengthError = this.validateDicesCount(dices);
         if (lengthError) {
-            return OperationResult.createFailed(lengthError);
+            return ConfigParsingResult.createFailed(lengthError);
         }
 
-        const dicesResult = this.parseAllDices(argv);
-        return dicesResult.error
-            ? OperationResult.createFailed(dicesResult.error)
-            : OperationResult.createSuccessful(new Config(dicesResult.result!));
+        return ConfigParsingResult.createSuccessful(new Config(dices));
     }
 
-    private static validateArgvLength(argv: string[]): string | null {
-        return argv.length < MIN_ARGV_LENGTH
-            ? resources.errors.getInvalidArgvLengthError(argv.length)
-            : null;
-    }
-
-    private static parseAllDices(
-        argv: string[],
-    ): OperationResult<Dice[], string | unknown> {
+    private parseDices(argv: string[]): ConfigParsingResult<Dice[], string> {
         const dices: Dice[] = [];
-
         for (let i = 0; i < argv.length; i++) {
-            const { error, result } = this.parseDice(argv[i], i);
+            const { result: dice, error } = this.parseDice(i, argv[i]);
             if (error) {
-                return OperationResult.createFailed(error);
+                return ConfigParsingResult.createFailed<Dice[], string>(error);
             }
-            dices.push(result!);
+            dices.push(dice);
         }
 
-        return OperationResult.createSuccessful(dices);
+        return ConfigParsingResult.createSuccessful(dices);
     }
 
-    private static parseDice(
-        arg: string,
+    private parseDice(
         index: number,
-    ): OperationResult<Dice, string | unknown> {
+        arg: string,
+    ): ConfigParsingResult<Dice, string> {
         const faces = arg.split(',');
-        const error =
-            Validator.validateDiceFacesCount(faces, DICE_FACES_COUNT, index) ??
-            Validator.validateDiceFacesValues(faces, index);
+
+        const diceFacesValidator = new DiceFacesValidator(index + 1, faces);
+        const error = diceFacesValidator.validate();
 
         return error
-            ? OperationResult.createFailed(error)
-            : OperationResult.createSuccessful(
+            ? ConfigParsingResult.createFailed<Dice, string>(error)
+            : ConfigParsingResult.createSuccessful<Dice, string>(
                   new Dice(index, faces.map(Number)),
               );
+    }
+
+    private validateDicesCount(argv: Dice[]): string | undefined {
+        return argv.length < ConfigParser.MIN_DICES_COUNT
+            ? resources.errors.getInvalidArgvLength(
+                  ConfigParser.MIN_DICES_COUNT,
+                  argv.length,
+              )
+            : undefined;
     }
 }

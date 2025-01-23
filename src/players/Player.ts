@@ -8,14 +8,18 @@ export enum PlayersNames {
 export abstract class Player {
     public readonly name: PlayersNames;
     public dice: Dice;
+    public throwResult?: number;
 
-    constructor(name: PlayersNames) {
+    protected constructor(name: PlayersNames) {
         this.name = name;
     }
 
-    abstract selectDice(availableDice: Dice[], firstPlayerName: PlayersNames): void;
+    abstract selectDice(
+        availableDice: Dice[],
+        firstPlayerName: PlayersNames,
+    ): void;
 
-    protected formatDice(dice) {
-        return JSON.stringify(dice.faces);
+    public setResult(faceIndex: number) {
+        this.throwResult = this.dice.faces[faceIndex];
     }
 }

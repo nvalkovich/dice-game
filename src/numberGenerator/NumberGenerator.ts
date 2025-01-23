@@ -4,12 +4,8 @@ import { KeyGenerator } from './KeyGenerator';
 import { HMACGenerator } from './HMACGenerator';
 
 export class NumberGenerator {
-    static generateNumber(max: number): number {
-        return randomInt(0, max);
-    }
-
-    static generateFairNumber(max: number): FairNumber {
-        const randomNumber = NumberGenerator.generateNumber(max);
+    public static generateFairNumber(max: number): FairNumber {
+        const randomNumber = randomInt(0, max);
         const key = KeyGenerator.generateKey();
         const hmac = HMACGenerator.generateHMAC(randomNumber, key);
 

@@ -7,11 +7,7 @@ export class Dice {
         this.faces = faces;
     }
 
-    static formatDice(dice: Dice): string {
-        return JSON.stringify(dice.faces);
-    }
-
     public toString(): string {
-        return Dice.formatDice(this);
+        return JSON.stringify(this.faces);
     }
 }

@@ -12,16 +12,14 @@ export class HumanPlayer extends Player {
 
     selectDice(availableDice: Dice[], firstPlayer: string): void {
         if (firstPlayer === this.name) {
-            console.log(resources.firstMove.userMakesFirstMove);
+            console.log(resources.messages.youMakeFirstMove);
         }
 
         this.dice = this.promptUserChoice(
             availableDice,
-            resources.menu.chooseDiceMessage,
+            resources.messages.chooseYourDice,
         );
 
-        console.log(
-            resources.dice.getUserChooseDiceMessage(Dice.formatDice(this.dice)),
-        );
+        console.log(resources.messages.getYouChooseDice(this.dice.toString()));
     }
 }
