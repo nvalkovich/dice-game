@@ -1,9 +1,9 @@
-import { Dice } from '../Dice';
+import { Dice } from '../dice/Dice';
 
 export class Config {
-    public readonly faces: Array<Dice> = [];
+    public readonly dices: Array<Dice> = [];
 
-    constructor(faces: Array<Dice>) {
-        this.faces = faces;
+    constructor(dices: Array<Dice>) {
+        this.dices = dices;
     }
 }

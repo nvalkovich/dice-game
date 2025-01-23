@@ -1,4 +1,5 @@
 import { ConfigParser } from './config/ConfigParser';
+import { Game } from './game/Game';
 
 const parseArgvResult = ConfigParser.parseArgv(process.argv);
 if (parseArgvResult.error) {
@@ -6,4 +7,7 @@ if (parseArgvResult.error) {
 }
 
 const config = parseArgvResult.result;
-console.log(config);
+
+const game = new Game(config);
+
+game.start();

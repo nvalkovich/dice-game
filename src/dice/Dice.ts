@@ -7,11 +7,11 @@ export class Dice {
         this.faces = faces;
     }
 
-    public getFace(faceIndex: number) {
-        return this.faces[faceIndex];
+    static formatDice(dice: Dice): string {
+        return JSON.stringify(dice.faces);
     }
 
     public toString(): string {
-        return this.faces.toString();
+        return Dice.formatDice(this);
     }
 }

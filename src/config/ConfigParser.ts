@@ -1,6 +1,6 @@
 import { Config } from './Config';
 import { OperationResult } from '../common/OperationResult';
-import { Dice } from '../Dice';
+import { Dice } from '../dice/Dice';
 import { DICE_FACES_COUNT } from '../common/constants';
 
 export class ConfigParser {
